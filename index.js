@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
 // JWT Verify
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-  // console.log(authorization);
+  console.log(authorization);
   if (!authorization) {
     return res.status(401).send({ error: true, message: 'unauthorized access' });
   }
@@ -34,9 +34,11 @@ const verifyJWT = (req, res, next) => {
   console.log(token);
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
     if (error) {
+      console.log(error);
       return res.status(401).send({ error: true, message: 'unauthorized access' });
     }
     req.decoded = decoded;
+    console.log(decoded);
     next();
   })
 }
@@ -52,7 +54,7 @@ async function run() {
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 5 });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
       console.log(token);
       res.send({ token });
     })
@@ -73,11 +75,14 @@ async function run() {
     // Booking Route
     app.get('/checkout', verifyJWT, async (req, res) => {
       const decoded = req.decoded;
-      if (decoded.email != req.query?.email) {
+      console.log('decoded: ', decoded);
+      console.log('decoded-email: ', decoded.email);
+      console.log('query-email: ', req.query.email);
+      if (decoded.email != req.query.email) {
         return res.status(403).send({ error: true, message: 'forbidden access' })
       }
       let query = {};
-      if (req.query?.email) {
+      if (req.query.email) {
         query = { email: req.query.email }
       }
       const result = await orderCollection.find(query).toArray();
